@@ -1,13 +1,11 @@
 package game;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import main.GLColor;
+import main.RenderableCollection;
 import geom.Point;
-import geom.Primitive;
 import geom.Rectangle;
 
-public class Digit extends Primitive {
+public class Digit extends RenderableCollection {
 	private static double[] fracs(double d){
 		double[] res = new double[(int) (d+1)];
 		for(int i=0;i<d;i++){
@@ -18,15 +16,15 @@ public class Digit extends Primitive {
 	private static final double[] FIFTHS = fracs(5);
 	private static final double[] THIRDS = fracs(3);
 	/* 
-	 *   +-0-+
-	 *   |   |
-	 *   1   2
-	 *   |   |
-	 *   +-3-+
-	 *   |   |
-	 *   4   5
-	 *   |   |
-	 *   +-6-+
+	 *   +--0--+
+	 *   |     |
+	 *   1     2
+	 *   |     |
+	 *   +--3--+
+	 *   |     |
+	 *   4     5
+	 *   |     |
+	 *   +--6--+
 	 * 
 	 */
 	private static Rectangle[] genSegs(){
@@ -77,8 +75,11 @@ public class Digit extends Primitive {
 		makeLine("1111010"),// 9
 	};
 	
-	public int digit;
-	public double width, height;
+	private int digit;
+	private boolean dirty = true;
+	private Point topleft = new Point(0,0);
+	private double width, height;
+	private GLColor backgroundColor = GLColor.WHITE;
 	
 	public Digit(){
 		this(0);
@@ -89,26 +90,80 @@ public class Digit extends Primitive {
 	}
 	
 	public Digit(int digit, double width, double height){
-		assert digit>=0 && digit<10;
+		assert digit>=0 && digit<DECODER.length;
 		this.digit = digit;
 	}
 
 	@Override
-	public Point[] getPoints() {
-		Set<Point> points = new HashSet<Point>();
-		int i = 0;
-		for(boolean b: DECODER[digit]){
-			if(b){
-				Rectangle r = SEGS[i];
-				r.setWidth(width);
-				
-				for(Point p : SEGS[i].getPoints()){
-					points.add(p);
-				}
-			}
-			i++;
+	public void render(int delta){
+		if(!this.dirty){
+			super.render(delta);
+			return;
 		}
-		return points.toArray(new Point[points.size()]);
+		this.objs.removeAll(this.objs);
+		assert this.objs.isEmpty();
+		for(int i=0; i<DECODER[digit].length; i++){
+			if(DECODER[digit][i]){
+				Rectangle r = new Rectangle(SEGS[i]);
+				r.setLineColor(null);
+				r.setBackgroundColor(backgroundColor);
+				r.setWidth(r.getWidth()*width);
+				r.setHeight(r.getHeight()*height);
+				r.setTopleft(r.getTopleft().add(topleft));
+				this.objs.add(r);
+			}
+		}
+		
+		super.render(delta);
+		this.dirty=false;
 	}
 
+	public int getDigit() {
+		return digit;
+	}
+
+	public void setDigit(int digit) {
+		this.digit = digit;
+		this.dirty=true;
+	}
+
+	public double getWidth() {
+		return width;
+	}
+
+	public void setWidth(double width) {
+		this.width = width;
+		this.dirty=true;
+	}
+
+	public double getHeight() {
+		return height;
+	}
+
+	public void setHeight(double height) {
+		this.height = height;
+		this.dirty=true;
+	}
+
+	public GLColor getBackgroundColor() {
+		return backgroundColor;
+	}
+
+	public void setBackgroundColor(GLColor backgroundColor) {
+		this.backgroundColor = backgroundColor;
+		this.dirty=true;
+	}
+
+	public Point getTopleft() {
+		return topleft;
+	}
+
+	public void setTopleft(Point topleft) {
+		this.topleft = topleft;
+		this.dirty=true;
+	}
+
+	public boolean isDirty() {
+		return dirty;
+	}
 }

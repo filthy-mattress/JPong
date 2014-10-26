@@ -8,6 +8,9 @@ import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
 
 public class Game extends RenderableCollection implements Runnable{
+	public static double millisToSecs(long millis){
+		return millis/100.0;
+	}
 	private long lastFrame=getTime();
 	private int fps=0;
 	private long lastFPS = getTime();
@@ -78,13 +81,7 @@ public class Game extends RenderableCollection implements Runnable{
 			e.printStackTrace();
 			System.exit(-1);
 		}
-//		Quad q1 = new Quad(new double[]{0,0,0.5,1}, new double[]{0,0.5,0.5,0});
-//		q1.setBackgroundColor(GLColor.BLUE);
-//		q1.setLineColor(GLColor.WHITE);
-//		g.addItem(q1);
-//		Triangle trig = new Triangle(new Point(-1,-1), new Point(0.5,-0.7),new Point(0,0));
-//		trig.setBackgroundColor(GLColor.GREEN);
-//		g.addItem(trig);
+		g.fpsCap = -1;
 		LocalMatch match = new LocalMatch();
 		g.addItem(match);
 		g.run();

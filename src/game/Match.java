@@ -5,6 +5,7 @@ import main.RenderableCollection;
 import geom.Point;
 
 public abstract class Match extends RenderableCollection{
+	public static final double XSPEED = 0.75; 
 	Player left;
 	Player right;
 	Ball ball;
@@ -34,7 +35,7 @@ public abstract class Match extends RenderableCollection{
 	}
 	public void resetBall(){
 		this.ball.setTopleft(new Point(ballstart));
-		this.ball.xVelocity=genSign()*0.25;
+		this.ball.xVelocity=genSign()*XSPEED;
 		this.ball.yVelocity=genSign()*this.ball.xVelocity*Math.random();
 //		System.out.println("Ball reset!");
 	}

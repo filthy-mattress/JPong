@@ -45,4 +45,7 @@ public class Point {
 	public Point setZ(double z){
 		return new Point(x,y,z);
 	}
+	public Point add(Point other){
+		return new Point(x+other.x,y+other.y+z+other.z);
+	}
 }

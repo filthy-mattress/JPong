@@ -2,14 +2,19 @@ package game;
 
 import java.awt.geom.Rectangle2D;
 
+import main.Game;
 import geom.Point;
 import geom.Rectangle;
 
 public class Ball extends Rectangle {
+	public static final double DEFAULT_X_SPEED = 0.05;
+	public static final double DEFAULT_Y_SPEED = 0.05;
 	public static final double BALL_SIZE = 0.05;
 	final Match owner;
-	double xVelocity = 0.05;
-	double yVelocity = 0.05;
+	double xVelocity = DEFAULT_X_SPEED;
+	double yVelocity = DEFAULT_Y_SPEED;
+	double xAcceleration = 0;
+	double yAcceleration = 0;
 	
 	public Ball(Match owner, Point topleft){
 		super(topleft, BALL_SIZE, BALL_SIZE);
@@ -17,13 +22,19 @@ public class Ball extends Rectangle {
 	}
 	
 	private void move(int delta){
-		double secs = delta/1000.0;
+		double secs = Game.millisToSecs(delta);
 		Point topleft = this.getTopleft();
 		double x = topleft.x, y=topleft.y, z=topleft.z;
 		x+= this.xVelocity * secs;
 		y+= this.yVelocity * secs;
-		if(y>=1 || y-this.getHeight()<=-1){
+		boolean hitbot = y-this.getHeight()<=-1;
+		if(y>=1 || hitbot){
 			yVelocity*=-1;
+			if(hitbot){
+				y=-1+this.getHeight();
+			}else{
+				y=1;
+			}
 		}
 		this.setTopleft(new Point(x,y,z));
 	}
@@ -50,9 +61,7 @@ public class Ball extends Rectangle {
 		this.setTopleft(new Point(x,y,z));
 	}
 	
-	public void update(int delta){
-		move(delta);
-		checkPaddles(delta);
+	private void checkGoals(){
 		final double x = this.getTopleft().x;
 		if(x<=-1){
 			owner.right.score++;
@@ -61,5 +70,18 @@ public class Ball extends Rectangle {
 			owner.left.score++;
 			owner.resetBall();
 		}
+	}
+	
+	private void accelerate(int delta){
+		double secs = Game.millisToSecs(delta);
+		this.xVelocity += this.xAcceleration * secs;
+		this.yVelocity += this.yAcceleration * secs;
+	}
+	
+	public void update(int delta){
+		accelerate(delta);
+		move(delta);
+		checkPaddles(delta);
+		checkGoals();
 	}
 }
