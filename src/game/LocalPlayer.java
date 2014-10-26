@@ -16,13 +16,10 @@ public class LocalPlayer extends Player {
 			}
 		}
 	}
-	public enum KeyMode{
-		WASD, ARROWS
-	}
 	public static final KeyMode WASD = KeyMode.WASD;
 	public static final KeyMode ARROWS = KeyMode.ARROWS;
 	
-	KeyMode mode;
+	protected KeyMode mode;
 	public LocalPlayer(Point start, KeyMode mode){
 		super(start);
 		this.mode = mode;
