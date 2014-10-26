@@ -46,6 +46,12 @@ public class Point {
 		return new Point(x,y,z);
 	}
 	public Point add(Point other){
-		return new Point(x+other.x,y+other.y+z+other.z);
+		return this.add(other.x, other.y, other.z);
+	}
+	public Point add(double x, double y){
+		return this.add(x, y, 0);
+	}
+	public Point add(double x, double y, double z){
+		return new Point(this.x+x,this.y+y, this.z+z);
 	}
 }

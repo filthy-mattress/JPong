@@ -7,7 +7,7 @@ import main.GLColor;
 
 public abstract class Player extends Paddle{
 	Match match = null;
-	Score scoreboard = new Score(this, new Digit(), new Digit());
+	Score scoreboard = new Score(this, 2);
 	int score = 0;
 	
 	protected Player(){

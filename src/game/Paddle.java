@@ -3,6 +3,7 @@ package game;
 import geom.Point;
 import geom.Rectangle;
 import main.GLColor;
+import main.Game;
 
 public abstract class Paddle extends Rectangle {
 	public static final double PADDLE_WIDTH = 0.05;
@@ -37,7 +38,7 @@ public abstract class Paddle extends Rectangle {
 	 * Updates the position of the paddle based on the keyboard input, the move speed, and the delta.
 	 */
 	public void update(int delta){
-		double secs = delta/1000.0;
+		double secs = Game.millisToSecs(delta);
 		double dy = currMoveSpeed() * secs;
 		Point topleft = this.getTopleft();
 		double x = topleft.x, y=topleft.y, z=topleft.z;

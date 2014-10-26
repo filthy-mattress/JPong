@@ -9,7 +9,7 @@ import org.lwjgl.opengl.GL11;
 
 public class Game extends RenderableCollection implements Runnable{
 	public static double millisToSecs(long millis){
-		return millis/100.0;
+		return millis/1000.0;
 	}
 	private long lastFrame=getTime();
 	private int fps=0;
@@ -70,6 +70,10 @@ public class Game extends RenderableCollection implements Runnable{
 		}
 		fps++;
 	}
+	
+	public void unlimitFPS(){
+		fpsCap = -1;
+	}
 	/**
 	 * @param args
 	 */
@@ -81,7 +85,7 @@ public class Game extends RenderableCollection implements Runnable{
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		g.fpsCap = -1;
+		g.unlimitFPS();
 		LocalMatch match = new LocalMatch();
 		g.addItem(match);
 		g.run();

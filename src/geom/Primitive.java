@@ -7,7 +7,7 @@ import org.lwjgl.opengl.GL11;
 
 public abstract class Primitive implements Renderable {
 	private boolean visible = true;
-	private GLColor backgroundColor = null;
+	private Surface background = null;
 	private GLColor lineColor = null;
 	
 	public abstract Point[] getPoints();
@@ -23,8 +23,8 @@ public abstract class Primitive implements Renderable {
 	@Override
 	public void render(int delta) {
 		update(delta);
-		if(backgroundColor!=null){
-			backgroundColor.activate();
+		if(background!=null){
+			background.apply();
 			runPoints(GL11.GL_POLYGON);
 		}
 		if(lineColor!=null){
@@ -43,7 +43,7 @@ public abstract class Primitive implements Renderable {
 
 	@Override
 	public boolean isVisible() {
-		return visible && (lineColor!=null || backgroundColor!=null);
+		return visible && (lineColor!=null || background!=null);
 	}
 
 	@Override
@@ -51,12 +51,8 @@ public abstract class Primitive implements Renderable {
 		this.visible = visible;
 	}
 
-	public GLColor getBackgroundColor() {
-		return backgroundColor;
-	}
-
 	public void setBackgroundColor(GLColor backgroundColor) {
-		this.backgroundColor = backgroundColor;
+		this.setBackground(new ColorSurface(backgroundColor));
 	}
 
 	public GLColor getLineColor() {
@@ -65,6 +61,14 @@ public abstract class Primitive implements Renderable {
 
 	public void setLineColor(GLColor lineColor) {
 		this.lineColor = lineColor;
+	}
+
+	public Surface getBackground() {
+		return background;
+	}
+
+	public void setBackground(Surface background) {
+		this.background = background;
 	}
 
 }
