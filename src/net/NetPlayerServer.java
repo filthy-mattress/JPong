@@ -6,15 +6,36 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
 
-import org.lwjgl.input.Keyboard;
+import main.RegThread;
 
-import game.KeyMode;
-import game.LocalPlayer;
+import game.Player;
 import geom.Point;
 
-public class NetPlayerServer extends LocalPlayer{
+/**
+ * <p>This class represents a remote player playing a game hosted on this machine.</p>
+ * 
+ * <p>Framework Diagram:</p>
+ * 
+ * <p><pre class="code">
+ * +---------+      +--------+      +--------+      +----------+      +--------+      +--------+
+ * |  Local  |      | JPong  |      | Server |      |  LAN or  |      | JPong  |      | Client |
+ * |  Player | ---> | Server | <--- | Player | <--- | Internet | <--- | Client | <--- | Player |
+ * |         |      | Match  |      |        |      |          |      | Match  |      |        |
+ * +---------+      +---+----+      +--------+      |          |      +----+---+      +--------+
+ *                      |                           |          |           |
+ *                      v                           |          |           ^
+ *                      |                           |          |           |
+ *                      +------->--------------->---|          |-->--------+
+ *                                                  +----------+
+ * </pre></p>
+ * 
+ * @author trh
+ *
+ */
+public class NetPlayerServer extends Player{
 	public static final String REQ_PREFIX = "!REQ:";
 	public static final String RES_PREFIX = "!RES:";
+	public static final String KEY_PREFIX = "!KEY:";
 	public static final int FAILURE = 0;
 	public static final int SUCCESS = 1;
 	public static final int REQ_KEYSTATE = 2;
@@ -32,27 +53,67 @@ public class NetPlayerServer extends LocalPlayer{
 		return res;
 	}
 	
-	Socket client = null;
-	PrintStream toClient = null;
-	BufferedReader fromClient = null;
-	boolean[] keyboardState = new boolean[Keyboard.getKeyCount()];
+	final Socket client;
+	final PrintStream toClient;
+	final BufferedReader fromClient;
+	private volatile boolean goUp = false, goDown = false, listen = false;
+	RegThread listenThread = null;
 	
-	public NetPlayerServer(Point start, Socket client){
-		super(start, KeyMode.WASD);
+	public NetPlayerServer(Point start, Socket client, boolean startlisten){
+		super(start);
+		this.client=client;
+		PrintStream tmpToClient = null;
+		BufferedReader tmpFromClient = null;
 		try {
-			this.toClient = new PrintStream(client.getOutputStream(), true);
-			this.fromClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
+			tmpToClient = new PrintStream(client.getOutputStream(), true);
+			tmpFromClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		while(!this.fetchKeyboardState()){}
-		while(!this.fetchKeyMode()){}
-		
+		this.toClient = tmpToClient;
+		this.fromClient = tmpFromClient;
+		this.listenThread = new RegThread(new Runnable(){
+			@Override
+			public void run() {
+				listenLoop();
+			}
+		}, "net.NetPlayerServer.listenThread");
+		this.listenThread.setDaemon(true);
+		if(startlisten){
+			this.startListening();
+		}
 	}
-
 	public NetPlayerServer(Point start) {
-		this(start, Server.getClient());
+		this(start, Server.getClient(), true);
+	}
+	
+	public void startListening(){
+		if(!listen){
+			this.listenThread.start();
+		}
+	}
+	
+	/**
+	 * Ends the listenThread
+	 * @param interrupt If true the thread will be interrupted and ended forcefully. If false it will wait for the thread to die naturally.
+	 */
+	public void stopListening(boolean interrupt){
+		this.listen=false;
+		if(interrupt){
+			this.listenThread.interrupt();
+		}
+		while(this.listenThread.isAlive()){}
+	}
+	private void listenLoop(){
+		listen = true;
+		while(listen){
+			if(readMessage(fetchMessage())){
+				sendSuccess();
+			}else{
+				sendFailure();
+			}
+		}
 	}
 	private boolean sendFailure(){
 		toClient.println(NetPlayerServer.RES_PREFIX+FAILURE);
@@ -62,40 +123,25 @@ public class NetPlayerServer extends LocalPlayer{
 		toClient.println(NetPlayerServer.RES_PREFIX+SUCCESS);
 		return true;
 	}
-	private boolean fetchKeyboardState(){
-		toClient.println(NetPlayerServer.REQ_KEYSTATE);
-		String startState = getLine(fromClient);
-		int i = 0;
-		for(String state : startState.split(",")){
-			keyboardState[i] = state.equals(""+true);
-		}
-		return this.sendSuccess();
+	private String fetchMessage(){
+		return getLine(fromClient);
 	}
-	
-	private boolean fetchKeyMode(){
-		toClient.println(NetPlayerServer.REQ_KEYMODE);
-		String mode = getLine(fromClient);
-		for(KeyMode km : KeyMode.values()){
-			if(mode.equalsIgnoreCase(km.toString())){
-				this.mode = km;
-				this.sendSuccess();
-			}
-		}
-		return this.sendFailure();
+	private boolean readMessage(String message){
+		
+		return true;
 	}
-	
 	public boolean isConnected(){
 		return client != null && client.isConnected();
 	}
 
 	@Override
 	public boolean isGoingUp() {
-		return this.keyboardState[this.getUpKey()];
+		return goUp;
 	}
 
 	@Override
 	public boolean isGoingDown() {
-		return this.keyboardState[this.getDownKey()];
+		return goDown;
 	}
 
 }
