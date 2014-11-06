@@ -6,8 +6,8 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
 
+import util.Util;
 import main.RegThread;
-
 import game.Player;
 import geom.Point;
 
@@ -18,11 +18,11 @@ import geom.Point;
  * 
  * <p><pre class="code">
  * +---------+      +--------+      +--------+      +----------+      +--------+      +--------+
- * |  Local  |      | JPong  |      | Server |      |  LAN or  |      | JPong  |      | Client |
- * |  Player | ---> | Server | <--- | Player | <--- | Internet | <--- | Client | <--- | Player |
+ * |  Local  |      | JPong  |      | Server |      |          |      | JPong  |      | Client |
+ * |  Player | ---> | Server | <--- | Player | <--- |          | <--- | Client | <--- | Player |
  * |         |      | Match  |      |        |      |          |      | Match  |      |        |
- * +---------+      +---+----+      +--------+      |          |      +----+---+      +--------+
- *                      |                           |          |           |
+ * +---------+      +---+----+      +--------+      |  LAN or  |      +----+---+      +--------+
+ *                      |                           | Internet |           |
  *                      v                           |          |           ^
  *                      |                           |          |           |
  *                      +------->--------------->---|          |-->--------+
@@ -33,13 +33,6 @@ import geom.Point;
  *
  */
 public class NetPlayerServer extends Player{
-	public static final String REQ_PREFIX = "!REQ:";
-	public static final String RES_PREFIX = "!RES:";
-	public static final String KEY_PREFIX = "!KEY:";
-	public static final int FAILURE = 0;
-	public static final int SUCCESS = 1;
-	public static final int REQ_KEYSTATE = 2;
-	public static final int REQ_KEYMODE = 3;
 	
 	private static String getLine(BufferedReader br){
 		String res = null;
@@ -115,19 +108,58 @@ public class NetPlayerServer extends Player{
 			}
 		}
 	}
+	private void send(Object... objects){
+		String msg = Util.join(Protocol.SEPARATOR, objects);
+		toClient.println(msg);
+	}
 	private boolean sendFailure(){
-		toClient.println(NetPlayerServer.RES_PREFIX+FAILURE);
+		send(Protocol.RES_PREFIX,Protocol.FAILURE);
 		return false;
 	}
 	private boolean sendSuccess(){
-		toClient.println(NetPlayerServer.RES_PREFIX+SUCCESS);
+		send(Protocol.RES_PREFIX,Protocol.SUCCESS);
 		return true;
 	}
 	private String fetchMessage(){
 		return getLine(fromClient);
 	}
+	
+	/**
+	 * Reads message and takes appropriate action
+	 * @param message Message from client
+	 * @return true if processed successfully, false otherwise
+	 */
 	private boolean readMessage(String message){
-		
+		String[] tokens = Protocol.tokenize(message);
+		if(tokens.length==0){
+			System.err.println("Received message with no tokens!");
+			return false;
+		}
+		String cmd = tokens[0];
+		if(cmd.equals(Protocol.SET_PREFIX)){
+			if(tokens.length<2){
+				System.err.println("Received set command with no property specification!");
+				return false;
+			}
+			if(tokens.length<3){
+				System.err.println("Received set command with no value specification!");
+				return false;
+			}
+			String property = tokens[1];
+			if(Util.contains(Protocol.BOOL_PROPS, property)){
+				boolean b = Boolean.parseBoolean(property);
+				if(property.equals(Protocol.GO_UP_PROP)){
+					this.goUp = b;
+				}else if(property.equals(Protocol.GO_DOWN_PROP)){
+					this.goDown=b;
+				}else if(property.equals(Protocol.LISTEN_PROP)){
+					this.listen=b;
+				}else{
+					System.err.println("Recieved set command referencing unknown boolean property: "+property);
+					return false;
+				}
+			}
+		}
 		return true;
 	}
 	public boolean isConnected(){
