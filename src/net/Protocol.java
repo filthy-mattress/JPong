@@ -26,6 +26,11 @@ public class Protocol {
 		LISTEN_PROP
 	};
 	
+	private static final char escapechar = '\\';
+	private static final HashMap<Character,String> escapeSeqs = Util.zip(
+			new Character[]{'"','\'','n','t','\\'},
+			"\";';\n;\t;\\".split(";"));
+	
 	/**
 	 * <p>Tokenizes messages separating on SEPARATOR with quoting and escaping capabilities.</p>
 	 * 
@@ -65,10 +70,7 @@ public class Protocol {
 		ArrayList<String> res = new ArrayList<String>();
 		String buffer = "";
 		boolean quoted = false, escape=false, done=false;
-		final char escapechar = '\\';
-		HashMap<Character,String> escapeSeqs = Util.zip(
-				new Character[]{'"','\'','n','t','\\'},
-				"\";';\n;\t;\\".split(";"));
+		
 		for(char c : message.toCharArray()){
 			if(escape){
 				String s = escapeSeqs.get(c);
@@ -84,7 +86,7 @@ public class Protocol {
 					quoted=true;
 				}
 			}else if(c==SEPARATOR){
-				if((!quoted) || (quoted && done)){
+				if((!quoted) || done){
 					res.add(buffer);
 					buffer="";
 					quoted=false;

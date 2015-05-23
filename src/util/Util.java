@@ -49,14 +49,6 @@ public class Util {
 	public static String join(char with, Object[] arr){
 		return join(with+"",arr);
 	}
-	
-	public static String sprintf(String src, Object...objects){
-		String res = "";
-		boolean escape = false;
-		final char escapechar = '%';
-		//TODO finish
-		return res;
-	}
 
 	private Util() {}
 
